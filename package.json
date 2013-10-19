@@ -1,0 +1,10 @@
+{
+  "name": "Video-uploader",
+  "version": "0.0.1",
+  "description": "Minimal video uploader",
+  "dependencies": {
+    "formidable": "latest",
+    "mime": "~1.2.7",
+    "request": "2.27.0"
+  }
+}
