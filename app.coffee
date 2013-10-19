@@ -8,10 +8,19 @@ request = require 'request'
 url = require 'url'
 
 cache = {}
+env = process.env.NODE_ENV  || 'development'
 
 send404 = (response) ->
+  console.log 'send404' 
+  
   response.writeHead 404, {'content-type': 'text/plain'}
   response.write 'Error 404: resource not found.'
+  response.end()
+
+send500 = (response, err) ->
+  console.log 'send500', err 
+  
+  response.writeHead 500, err
   response.end()
 
 
@@ -45,7 +54,10 @@ fs.mkdirParent = (dirPath, next) ->
 
 pathVideo = (data, fileName)->
   ext = fileName.split('.')
-  data.path + data.name + '.' + ext[ext.length - 1]
+  if env is 'development'
+    __dirname + '/video/' + data.name + '.' + ext[ext.length - 1]
+  else
+    data.path + data.name + '.' + ext[ext.length - 1]
 
 getFilmPath = (id, next)->
   request.post
@@ -60,13 +72,10 @@ getFilmPath = (id, next)->
         next(null, body)
 
 setSuccess = (params, next) ->
-  console.log params.id
   request.post
     url: "https://www.festivalopen.com/cloudfilm/api/set_success"
     form: params
     , (err, status, body) ->
-      console.log err, body
-
       body = JSON.parse(body)
       if err or status.statusCode isnt 200 or body.success is false
         next(body)
@@ -83,22 +92,27 @@ server = http.createServer (req, res) ->
 
     form.parse req, (err, fields, files)->
       getFilmPath fields.idFile, (err, data) ->
-        res.writeHead(500).end() if err
+        send500(res, err) if err 
        
         fs.mkdirParent data.path, (err)->
           finalPath = pathVideo data, files.videoFile.name
+          console.log 'pathVideo', finalPath
           fs.rename files.videoFile.path, finalPath, (err)->
-            res.writeHead(500).end() if err
+            send500(res, err) if err
             
             setSuccess {id: fields.idFile, path: finalPath, size: files.videoFile.size}, (err, data) ->
-              console.log err if err
-              console.log data 
-              console.log util.inspect({fields:fields, files:files}), '\n'
+              send500(res, err) if err
+              
               res.writeHead 200, {'content-type': 'text/plain'}
               res.write 'received upload:\n\n'
               res.end() 
+    
+    mega = 1024 * 1024
+    megabytes= 0
     form.on 'progress', (bytesReceived, bytesExpected)->
-      console.log(bytesReceived + ' ' + bytesExpected)
+      if bytesReceived/(mega * megabytes) > megabytes
+        megabytes++
+        console.log(parseFloat(bytesReceived/mega).toFixed(2) + ' ' + parseFloat(bytesExpected/mega).toFixed(2) + ' Mb')
   
   url_parts = url.parse(req.url,true)
 

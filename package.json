@@ -1,7 +1,7 @@
 {
   "name": "Video-uploader",
   "version": "0.0.1",
-  "description": "Minimal video uploader",
+  "description": "Minimal Video uploader",
   "dependencies": {
     "formidable": "latest",
     "mime": "~1.2.7",
