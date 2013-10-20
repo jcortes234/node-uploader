@@ -45,13 +45,6 @@ serverStatic = (response, cache, absPath) ->
       else
         send404 response
 
-fs.mkdirParent = (dirPath, next) ->
-  fs.mkdir dirPath, '0755', (err)->
-    if err and err.errno is 34
-      fs.mkdirParent(path.dirname(dirPath), next)
-      fs.mkdirParent(dirPath, next)
-    next(err) if next
-
 pathVideo = (data, fileName)->
   ext = fileName.split('.')
   if env is 'development'
@@ -98,19 +91,17 @@ server = http.createServer (req, res) ->
       getFilmPath fields.idFile, (err, data) ->
         send500(res, err) if err 
        
-        fs.mkdirParent data.path, (err)->
+        finalPath = pathVideo data, files.videoFile.name
+        console.log 'pathVideo', finalPath
+        fs.rename files.videoFile.path, finalPath, (err)->
           send500(res, err) if err
-          finalPath = pathVideo data, files.videoFile.name
-          console.log 'pathVideo', finalPath
-          fs.rename files.videoFile.path, finalPath, (err)->
+          
+          setSuccess {id: fields.idFile, path: finalPath, size: files.videoFile.size}, (err, data) ->
             send500(res, err) if err
             
-            setSuccess {id: fields.idFile, path: finalPath, size: files.videoFile.size}, (err, data) ->
-              send500(res, err) if err
-              
-              res.writeHead 200, {'content-type': 'text/plain'}
-              res.write 'received upload:\n\n'
-              res.end() 
+            res.writeHead 200, {'content-type': 'text/plain'}
+            res.write 'received upload:\n\n'
+            res.end() 
     
     form.on 'progress', (bytesReceived, bytesExpected)->
       process.stdout.write(bytesReceived + ' ' + bytesExpected + "\r");
