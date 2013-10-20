@@ -60,18 +60,21 @@ pathVideo = (data, fileName)->
     data.path + data.name + '.' + ext[ext.length - 1]
 
 getFilmPath = (id, next)->
+  console.log 'getFilmPath', id
   request.post
     url: "https://www.festivalopen.com/cloudfilm/api/get_film_path"
     form:
       id:id
     , (err, status, body) ->
       body = JSON.parse(body)
+      console.log 
       if err or status.statusCode isnt 200 or body.success is false
         next(err)
       else
         next(null, body)
 
 setSuccess = (params, next) ->
+  console.log 'setSuccess', params
   request.post
     url: "https://www.festivalopen.com/cloudfilm/api/set_success"
     form: params
@@ -107,13 +110,15 @@ server = http.createServer (req, res) ->
               res.write 'received upload:\n\n'
               res.end() 
     
-    mega = 1024 * 1024
-    megabytes= 0
     form.on 'progress', (bytesReceived, bytesExpected)->
-      if bytesReceived/(mega * megabytes) > megabytes
-        megabytes++
-        console.log(parseFloat(bytesReceived/mega).toFixed(2) + ' ' + parseFloat(bytesExpected/mega).toFixed(2) + ' Mb')
-  
+      process.stdout.write(bytesReceived + ' ' + bytesExpected + "\r");
+    
+    form.on 'error', (err)->
+      send500(res, err)
+
+    form.on 'end', (err)->
+      console.log 'Upload done'
+
   url_parts = url.parse(req.url,true)
 
   if url_parts.pathname is '/'
