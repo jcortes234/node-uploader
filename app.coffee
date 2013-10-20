@@ -99,6 +99,7 @@ server = http.createServer (req, res) ->
         send500(res, err) if err 
        
         fs.mkdirParent data.path, (err)->
+          send500(res, err) if err
           finalPath = pathVideo data, files.videoFile.name
           console.log 'pathVideo', finalPath
           fs.rename files.videoFile.path, finalPath, (err)->
