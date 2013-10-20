@@ -55,7 +55,8 @@ fs.mkdirParent = (dirPath, next) ->
 pathVideo = (data, fileName)->
   ext = fileName.split('.')
   if env is 'development'
-    __dirname + '/video/' + data.name + '.' + ext[ext.length - 1]
+    dir = data.path.split('/')
+    __dirname + '/video/' + dir[dir.length - 2] + '/' + data.name + '.' + ext[ext.length - 1]
   else
     data.path + data.name + '.' + ext[ext.length - 1]
 
@@ -67,7 +68,7 @@ getFilmPath = (id, next)->
       id:id
     , (err, status, body) ->
       body = JSON.parse(body)
-      console.log 
+      console.log body
       if err or status.statusCode isnt 200 or body.success is false
         next(err)
       else
