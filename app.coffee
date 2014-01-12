@@ -39,6 +39,7 @@ server = http.createServer (req, res) ->
           , done
         (data, done) -> 
           finalPath = pathVideo(data, files.videoFile.name)
+          console.log 'path', finalPath
           fs.rename(files.videoFile.path, finalPath, done)
         (done) ->
           request.post '/set_success',
