@@ -1,21 +1,10 @@
 {
-  "name": "express-upload-progress",
+  "name": "Video-uploader",
   "version": "0.0.1",
-  "description": "example to show file uploading with express.js and progress bar",
-  "scripts": {
-    "start": "node app"
-  },
+  "description": "Minimal Video uploader",
   "dependencies": {
-    "jade": "*",
-    "express": "~3.1.0"
-  },
-  "author": {
-    "name": "Mirco Zeiss",
-    "email": "mirco.zeiss@gmail.com",
-    "twitter": "zeMirco"
-  },
-  "engines": {
-    "node": "0.8.x",
-    "npm": "1.1.x"
+    "formidable": "latest",
+    "mime": "~1.2.7",
+    "request": "2.27.0"
   }
 }
