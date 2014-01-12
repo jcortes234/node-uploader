@@ -1,83 +1,27 @@
+async = require 'async'
 formidable = require 'formidable'
-http = require 'http'
-util = require 'util'
 fs = require 'fs'
-path = require 'path'
+http = require 'http'
 mime = require 'mime'
+path = require 'path'
 request = require 'request'
 url = require 'url'
+util = require 'util'
+
+response = require './lib/response'
+request = require './lib/request'
+
 
 cache = {}
 env = process.env.NODE_ENV  || 'development'
-
-send404 = (response) ->
-  console.log 'send404' 
-  
-  response.writeHead 404, {'content-type': 'text/plain'}
-  response.write 'Error 404: resource not found.'
-  response.end()
-
-send500 = (response, err) ->
-  console.log 'send500', err 
-  
-  response.writeHead 500, err
-  response.end()
-
-
-sendFile = (response, filePath, fileContents) ->
-  response.writeHead 200, 
-    "content-type":mime.lookup(path.basename(filePath))
-  response.end fileContents
-
-
-serverStatic = (response, cache, absPath) ->
-  if cache[absPath] 
-    sendFile response, absPath, cache[absPath]
-  else
-    fs.exists absPath, (exists) ->
-      if exists
-        fs.readFile absPath, (err, data)->
-          if err
-            send404 response
-          else
-            cache[absPath] = data
-            sendFile response, absPath, data
-      else
-        send404 response
 
 pathVideo = (data, fileName)->
   ext = fileName.split('.')
   if env is 'development'
     dir = data.path.split('/')
-    __dirname + '/video/' + dir[dir.length - 2] + '/' + data.name + '.' + ext[ext.length - 1]
+    __dirname + '/video/' + data.name + '.' + ext[ext.length - 1]
   else
     data.path + data.name + '.' + ext[ext.length - 1]
-
-getFilmPath = (id, next)->
-  console.log 'getFilmPath', id
-  request.post
-    url: "https://www.festivalopen.com/cloudfilm/api/get_film_path"
-    form:
-      id:id
-    , (err, status, body) ->
-      body = JSON.parse(body)
-      console.log body
-      if err or status.statusCode isnt 200 or body.success is false
-        next(err)
-      else
-        next(null, body)
-
-setSuccess = (params, next) ->
-  console.log 'setSuccess', params
-  request.post
-    url: "https://www.festivalopen.com/cloudfilm/api/set_success"
-    form: params
-    , (err, status, body) ->
-      body = JSON.parse(body)
-      if err or status.statusCode isnt 200 or body.success is false
-        next(body)
-      else
-        next(null, body)
 
 server = http.createServer (req, res) ->
   console.log req.method, req.url
@@ -86,28 +30,33 @@ server = http.createServer (req, res) ->
     form = new formidable.IncomingForm()
     form.uploadDir = __dirname + '/video'
     form.maxFieldsSize = 26712580393;
+    finalPath = null
+    form.parse req, (err, fields, files) ->
+      async.waterfall [
+        (done) -> 
+          request.post '/get_film_path',
+            id: fields.idFile
+          , done
+        (data, done) -> 
+          finalPath = pathVideo(data, files.videoFile.name)
+          fs.rename(files.videoFile.path, finalPath, done)
+        (done) ->
+          request.post '/set_success',
+            id: fields.idFile
+            path: finalPath
+            size: files.videoFile.size
+          , done
+      ], (err, data) ->
+        response.r500(res, err) if err
+        res.writeHead 200, {'content-type': 'text/plain'}
+        res.write 'received upload:\n\n'
+        res.end() 
 
-    form.parse req, (err, fields, files)->
-      getFilmPath fields.idFile, (err, data) ->
-        send500(res, err) if err 
-       
-        finalPath = pathVideo data, files.videoFile.name
-        console.log 'pathVideo', finalPath
-        fs.rename files.videoFile.path, finalPath, (err)->
-          send500(res, err) if err
-          
-          setSuccess {id: fields.idFile, path: finalPath, size: files.videoFile.size}, (err, data) ->
-            send500(res, err) if err
-            
-            res.writeHead 200, {'content-type': 'text/plain'}
-            res.write 'received upload:\n\n'
-            res.end() 
-    
     form.on 'progress', (bytesReceived, bytesExpected)->
       process.stdout.write(bytesReceived + ' ' + bytesExpected + "\r");
     
     form.on 'error', (err)->
-      send500(res, err)
+      response.r500(res, err)
 
     form.on 'end', (err)->
       console.log 'Upload done'
@@ -119,7 +68,7 @@ server = http.createServer (req, res) ->
     res.end require('./public/index')(url_parts.query.id)
 
   else
-    serverStatic res, cache, './public/'+req.url
+    response.static(res, cache, "./public/#{req.url}")
 
 
 server.listen(3000)

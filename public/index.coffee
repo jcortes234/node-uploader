@@ -12,8 +12,8 @@ module.exports = (id)->
            <div class="row">
            <div class="span12">
             <form method="post" action="/" enctype="multipart/form-data">
-              <input type="file" name="video" id="videoFile">
-            <input type="hidden" name="name" id="idFile" value="'''+id+'''">
+            <input type="file" name="videoFile" id="videoFile">
+            <input type="hidden" name="idFile" id="idFile" value="'''+id+'''">
             <br /><br />
               <div>
                 <input type="submit" value="Iniciar carga" class="btn btn-success">
