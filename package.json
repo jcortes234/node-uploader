@@ -2,9 +2,12 @@
   "name": "Video-uploader",
   "version": "0.0.1",
   "description": "Minimal Video uploader",
+  "main": "app.coffee",
   "dependencies": {
     "formidable": "latest",
     "mime": "~1.2.7",
-    "request": "2.27.0"
+    "request": "2.27.0",
+    "async": "~0.2.9",
+    "coffee-script": "~1.6.3"
   }
 }

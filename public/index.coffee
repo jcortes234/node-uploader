@@ -13,8 +13,8 @@ module.exports = (id)->
            <div class="span12">
             <form method="post" action="/" enctype="multipart/form-data">
               <legend>Upload File</legend>
-              <input type="file" name="video" id="videoFile">
-            <input type="hidden" name="name" id="idFile" value="'''+id+'''">
+              <input type="file" name="videoFile" id="videoFile">
+              <input type="hidden" name="idFile" id="idFile" value="'''+id+'''">
               <p></p>
               <div class="form-actions">
                 <input type="submit" value="Start" class="btn btn-primary">
