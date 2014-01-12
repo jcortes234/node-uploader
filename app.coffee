@@ -46,8 +46,7 @@ server = http.createServer (req, res) ->
             path: finalPath
             size: files.videoFile.size
           , done
-      ], (err) ->
-        console.log('err',err)
+      ], (err, data) ->
         response.r500(res, err) if err
         res.writeHead 200, {'content-type': 'text/plain'}
         res.write 'received upload:\n\n'
