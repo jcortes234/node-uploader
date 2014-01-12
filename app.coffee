@@ -21,7 +21,7 @@ pathVideo = (data, fileName)->
     dir = data.path.split('/')
     __dirname + '/video/' + data.name + '.' + ext[ext.length - 1]
   else
-    data.path + data.name + '.' + ext[ext.length - 1]
+    "#{data.path}/#{data.name}.#{ext[ext.length - 1]}"
 
 server = http.createServer (req, res) ->
   console.log req.method, req.url
